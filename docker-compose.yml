@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  beanstalkd:
+    image: rayyounghong/beanstalkd
+    container_name: hsa13_beanstalkd
+    volumes:
+      - beanstalkd_data:/var/lib/beanstald
+    ports:
+      - 11300:11300
+
+  redis_rdb:
+    image: redis:7.2.4
+    container_name: hsa13_redis_rdb
+    volumes:
+      - redis_rdb_data:/data
+      - ./redis_rdb/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - 6380:6380
+    command: redis-server /usr/local/etc/redis/redis.conf
+  
+  redis_aof:
+    image: redis:7.2.4
+    container_name: hsa13_redis_aof
+    volumes:
+      - redis_aof_data:/data
+      - ./redis_aof/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - 6379:6379
+    command: redis-server /usr/local/etc/redis/redis.conf
+  
+  test:
+    build: ./application
+    working_dir: /application
+    container_name: hsa13_test
+    volumes:
+      - ./application:/application:rw
+    depends_on:
+      - beanstalkd
+      - redis_rdb
+      - redis_aof
+    command: python main.py
+
+volumes:
+  beanstalkd_data: {}
+  redis_rdb_data: {}
+  redis_aof_data: {}
